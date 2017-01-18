@@ -26,10 +26,15 @@ import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.PeripheralManagerService;
 import com.nishtahir.androidthings.liquidcrystal.io.LiquidCrystal;
 import com.nishtahir.androidthings.liquidcrystal.network.api.WeatherService;
+import com.nishtahir.androidthings.liquidcrystal.network.api.model.CurrentWeather;
 
 import java.io.IOException;
 
 import javax.inject.Inject;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends Activity {
 
@@ -53,7 +58,7 @@ public class MainActivity extends Activity {
 
         try {
             Gpio rs = service.openGpio("BCM6");
-            Gpio e = service.openGpio("BCM19");
+            Gpio e  = service.openGpio("BCM19");
             Gpio d4 = service.openGpio("BCM26");
             Gpio d5 = service.openGpio("BCM16");
             Gpio d6 = service.openGpio("BCM20");
@@ -61,25 +66,25 @@ public class MainActivity extends Activity {
 
 
             liquidCrystal = new LiquidCrystal(rs, e, d4, d5, d6, d7);
-            liquidCrystal.write((byte) 0xFF);
+            weatherService.loadCurrentWeather("Charlottesville VA", new Callback<CurrentWeather>() {
+                @Override
+                public void onResponse(Call<CurrentWeather> call, Response<CurrentWeather> response) {
+                    response.body().main().currentTemp();
+                    CurrentWeather weather = response.body();
+                    try {
+                        liquidCrystal.write(weather.name());
+                        liquidCrystal.setCursor(2, 1);
+                        liquidCrystal.write("" + weather.main().currentTemp() + "F");
+                    } catch (IOException e) {
+                        Log.e(TAG, e.getMessage());
+                    }
+                }
 
-//            weatherService.loadCurrentWeather("Charlottesville VA", new Callback<CurrentWeather>() {
-//                @Override
-//                public void onResponse(Call<CurrentWeather> call, Response<CurrentWeather> response) {
-//                    response.body().main().currentTemp();
-//                    CurrentWeather weather = response.body();
-//                    try {
-//                        liquidCrystal.write(weather.name() + " " + weather.main().currentTemp());
-//                    } catch (IOException e1) {
-//                        e1.printStackTrace();
-//                    }
-//                }
-//
-//                @Override
-//                public void onFailure(Call<CurrentWeather> call, Throwable t) {
-//                    Log.e(TAG, t.getMessage());
-//                }
-//            });
+                @Override
+                public void onFailure(Call<CurrentWeather> call, Throwable t) {
+                    Log.e(TAG, t.getMessage());
+                }
+            });
 
         } catch (IOException | InterruptedException e) {
             Log.e(TAG, e.getMessage());
@@ -91,7 +96,7 @@ public class MainActivity extends Activity {
         super.onDestroy();
         try {
             if (liquidCrystal != null) {
-                liquidCrystal.shutDown();
+                liquidCrystal.close();
             }
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());

@@ -1,5 +1,6 @@
 package com.nishtahir.androidthings.liquidcrystal.io;
 
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -12,7 +13,7 @@ import java.util.List;
 /**
  * Liquid crystal driver.
  */
-public class LiquidCrystal implements Runnable {
+public class LiquidCrystal implements Runnable, AutoCloseable {
 
     private static final String TAG = LiquidCrystal.class.getSimpleName();
 
@@ -24,9 +25,13 @@ public class LiquidCrystal implements Runnable {
      * Has to be int, no unsigned byte unfortunately...
      */
     private static final int LCD_SET_DDRAM_ADDR = 0x80;
+    private static final byte LCD_DDRAM_ADDR_COL1_ROW0 = 0x40;
 
     private static final byte LCD_DISPLAY_ON = 0x0F;
     private static final byte LCD_CLEAR_DISPLAY = 0x01;
+
+    private static final byte ROWS = 2;
+    private static final byte COLUMNS = 16;
 
     @NonNull
     private Gpio resetPin;
@@ -63,13 +68,6 @@ public class LiquidCrystal implements Runnable {
             bit.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW);
         }
 
-        init();
-    }
-
-    /**
-     * @throws IOException
-     */
-    private void init() throws IOException {
         sendCommand(LCD_4_BIT_OPERATING_MODE, /*four bit mode*/ true);
         sendCommand(LCD_8_BIT_FUNCTION);
         sendCommand(LCD_DISPLAY_ON);
@@ -77,9 +75,10 @@ public class LiquidCrystal implements Runnable {
         sendCommand(LCD_CLEAR_DISPLAY);
     }
 
-    public void write(@NonNull final String value) throws IOException {
-        for (char c : value.toCharArray()) {
-            write(c);
+    public void write(@NonNull String val) throws IOException {
+        resetPin.setValue(true);
+        for (char b : val.toCharArray()) {
+            write(b);
         }
     }
 
@@ -88,13 +87,10 @@ public class LiquidCrystal implements Runnable {
         write8((byte) c);
     }
 
-    public void write(byte... val) throws IOException {
-        resetPin.setValue(true);
-        for (byte b : val) {
-            write8(b);
-        }
+    public void setCursor(@IntRange(from = 1, to = ROWS) int row,
+                          @IntRange(from = 1, to = COLUMNS) int column) throws IOException {
+        sendCommand((byte) (LCD_SET_DDRAM_ADDR | ((LCD_DDRAM_ADDR_COL1_ROW0 * (row - 1)) + (column - 1))));
     }
-
 
     /**
      * @param command
@@ -108,7 +104,6 @@ public class LiquidCrystal implements Runnable {
         } else {
             write8(command);
         }
-        delay(1);
     }
 
     /**
@@ -129,7 +124,6 @@ public class LiquidCrystal implements Runnable {
      */
     private void write8(byte value) throws IOException {
         write4((byte) (value >> 4));
-        delay(1);
         write4(value);
     }
 
@@ -145,6 +139,7 @@ public class LiquidCrystal implements Runnable {
             pin.setValue(((value >> i & 0x01) != 0));
         }
         pulseEnable();
+        delay(1);
     }
 
     private void pulseEnable() throws IOException {
@@ -154,20 +149,6 @@ public class LiquidCrystal implements Runnable {
         delay(1);
         enablePin.setValue(false);
         delay(1);
-    }
-
-    /**
-     * Terminates connection to the LCD display.
-     *
-     * @throws IOException
-     */
-    public void shutDown() throws IOException {
-        resetPin.close();
-        enablePin.close();
-
-        for (Gpio pin : dataBus) {
-            pin.close();
-        }
     }
 
     @Override
@@ -188,4 +169,13 @@ public class LiquidCrystal implements Runnable {
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        resetPin.close();
+        enablePin.close();
+
+        for (Gpio pin : dataBus) {
+            pin.close();
+        }
+    }
 }
