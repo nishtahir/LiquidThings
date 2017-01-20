@@ -3,14 +3,18 @@ LiquidThings
 
 Is a weather app that uses the Android things platform to display the weather on a HD44780 compatible LCD display.
 
-
-![](https://github.com/nishtahir/LiquidThings/blob/master/android_things_lcd_wiring.png)
-
 Pre-requisites
 --------------
 
 - Android Things compatible board
 - Android Studio 2.2+
+
+Documentation
+-------------
+
+![Wiring](https://github.com/nishtahir/LiquidThings/blob/master/android_things_lcd_wiring.png)
+
+[Link](http://lcd-linux.sourceforge.net/pdfdocs/hd44780.pdf) to Datasheet.
 
 License
 -------

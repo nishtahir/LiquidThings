@@ -21,7 +21,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+import com.example.androidthings.myproject.R;
 import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.PeripheralManagerService;
 import com.nishtahir.androidthings.liquidcrystal.io.LiquidCrystal;
@@ -40,6 +43,8 @@ public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static final String SPLASH_IMAGE = "http://66.media.tumblr.com/1ca84118c53c894c08f45feb1a717c2a/tumblr_mv8byguOhx1r0cgg3o4_r1_400.gif";
+
     @Inject
     WeatherService weatherService;
 
@@ -49,7 +54,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.layout);
         LiquidCrystalApplication.get(this).getComponent().inject(this);
+
+        ImageView view = (ImageView) findViewById(R.id.image);
+        Glide.with(this).load(SPLASH_IMAGE).into(view);
 
         PeripheralManagerService service = new PeripheralManagerService();
 

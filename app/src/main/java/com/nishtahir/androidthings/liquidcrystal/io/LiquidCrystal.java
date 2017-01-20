@@ -29,6 +29,7 @@ public class LiquidCrystal implements Runnable, AutoCloseable {
 
     private static final byte LCD_DISPLAY_ON = 0x0F;
     private static final byte LCD_CLEAR_DISPLAY = 0x01;
+    private static final byte LCD_SET_ENTRY_MODE_NO_SHIFT_DISPLAY = 0x06;
 
     private static final byte ROWS = 2;
     private static final byte COLUMNS = 16;
@@ -43,12 +44,15 @@ public class LiquidCrystal implements Runnable, AutoCloseable {
     private List<Gpio> dataBus;
 
     /**
-     * @param rs
-     * @param e
-     * @param d4
-     * @param d5
-     * @param d6
-     * @param d7
+     *
+     * d4..d7 Four high order bidirectional tristate data bus pins.
+     * Used for data transfer and receive between the MPU and the HD44780U.
+     * DB7 can be used as a busy flag.
+     *
+     * @param rs Selects registers.
+     *           0: Instruction register (for write) Busy flag:address counter (for read)
+     *           1: Data register (for write and read)
+     * @param e  Starts data read/write
      * @throws IOException
      */
     public LiquidCrystal(@NonNull Gpio rs,
@@ -71,7 +75,7 @@ public class LiquidCrystal implements Runnable, AutoCloseable {
         sendCommand(LCD_4_BIT_OPERATING_MODE, /*four bit mode*/ true);
         sendCommand(LCD_8_BIT_FUNCTION);
         sendCommand(LCD_DISPLAY_ON);
-        sendCommand((byte) 0x06);
+        sendCommand(LCD_SET_ENTRY_MODE_NO_SHIFT_DISPLAY);
         sendCommand(LCD_CLEAR_DISPLAY);
     }
 
